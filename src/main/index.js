@@ -24,12 +24,17 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     height: 768,
     useContentSize: true,
-    width: 1024
+    width: 1024,
+    show: false
   })
 
-  mainWindow.webContents.closeDevTools()
+  // mainWindow.webContents.closeDevTools()
 
   mainWindow.loadURL(winURL)
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null

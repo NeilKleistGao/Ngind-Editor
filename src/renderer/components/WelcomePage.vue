@@ -38,6 +38,7 @@
                 </el-col>
             </el-row>
         </el-aside>
+
         <el-main>
             <div v-if="current === '1'">
                 <h1>Recent Releases</h1>
@@ -56,13 +57,15 @@
                 <h1>Create New Project</h1>
                 <el-form ref="form">
                     <el-form-item label="Project Name">
-                        <el-input></el-input>
+                        <el-input v-model="create_data.name"></el-input>
                     </el-form-item>
                     <el-form-item label="Path:">
-                        <el-input></el-input>
+                        <el-input v-model="create_data.path">
+                            <el-button slot="append" @click="browseCreatePath">Browse</el-button>
+                        </el-input>
                     </el-form-item>
                     <el-form-item>
-                        <el-button type="primary">Create</el-button>
+                        <el-button type="primary" @click="create">Create</el-button>
                     </el-form-item>
                 </el-form>
             </div>
@@ -98,7 +101,6 @@
             </div>
             <div v-else>
                 <h1>Settings</h1>
-                <span>TODO:</span>
             </div>
         </el-main>
     </el-container>
@@ -122,6 +124,10 @@ export default {
                     "link": "https://github.com/NeilKleistGao/NginD/releases/tag/v0.3.0"
                 }
             ],
+            create_data: {
+                name: "",
+                path: ""
+            },
             recent_data: null,
             help_data: [
                 {
@@ -130,6 +136,20 @@ export default {
                 }
             ]
         };
+    },
+    methods: {
+        create() {
+            if (this.name !== "" && this.path !== "") {
+                this.$router.push({path: '/main', params: {project: this.path}})
+            }
+        },
+        browseCreatePath() {
+            const remote = require('electron').remote
+            const dialog = require('electron').remote.dialog
+            this.create_data.path = dialog.showOpenDialog(remote.getCurrentWindow(), {
+                properties: ['openDirectory']
+            })
+        }
     }
 }
 </script>
