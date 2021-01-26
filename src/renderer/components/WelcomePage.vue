@@ -101,6 +101,13 @@
             </div>
             <div v-else>
                 <h1>Settings</h1>
+                <el-form ref="form">
+                    <el-form-item label="Engine Path">
+                        <el-input v-model="settings_data.engine_path">
+                            <el-button slot="append" @click="browseEnginePath">Browse</el-button>
+                        </el-input>
+                    </el-form-item>
+                </el-form>
             </div>
         </el-main>
     </el-container>
@@ -134,13 +141,16 @@ export default {
                     "title": "Documentation",
                     "link": "https://ngind-doc.readthedocs.io/en/latest/?badge=latest"
                 }
-            ]
+            ],
+            settings_data: {
+                engine_path: ""
+            }
         };
     },
     methods: {
         create() {
-            if (this.name !== "" && this.path !== "") {
-                this.$router.push({path: '/main', params: {project: this.path}})
+            if (this.name !== "" && this.path !== "" && this.settings_data.engine_path !== "") {
+                this.$router.push({path: '/main', params: {project: this.path, engine: this.settings_data.engine_path}})
             }
         },
         browseCreatePath() {
@@ -149,6 +159,24 @@ export default {
             this.create_data.path = dialog.showOpenDialog(remote.getCurrentWindow(), {
                 properties: ['openDirectory']
             })
+        },
+        browseEnginePath() {
+            const remote = require('electron').remote
+            const dialog = require('electron').remote.dialog
+            this.settings_data.engine_path = dialog.showOpenDialog(remote.getCurrentWindow(), {
+                properties: ['openDirectory']
+            })
+        }
+    },
+    watch: {
+        "settings_data.engine_path"(new_value) {
+            localStorage.setItem("engine-path", new_value)
+        }
+    },
+    beforeMount() {
+        this.settings_data.engine_path = localStorage.getItem("engine-path")
+        if (this.settings_data.engine_path === "null") {
+            this.settings_data.engine_path = ""
         }
     }
 }
