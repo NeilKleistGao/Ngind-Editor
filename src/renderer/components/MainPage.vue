@@ -2,7 +2,10 @@
     <el-container>
         <el-aside>
             <el-card>
-                <h4 slot="header" class="clearfix">World: {{world_name}}</h4>
+                <el-select v-model="world_name" filterable>
+                    <el-option v-for="w in worlds" :key="w" :label="w" :value="w"></el-option>
+                </el-select>
+                <br/>
                 <div>
                     <el-input placeholder="search..." v-model="tree_search_text"></el-input>
                     <el-divider></el-divider>
@@ -18,23 +21,25 @@
                         <span slot="label">
                             <i class="el-icon-picture-outline-round"></i>World
                         </span>
-                        <i class="el-icon-loading"></i>
                     </el-tab-pane>
                     <el-tab-pane>
                         <span slot="label">
                             <i class="el-icon-video-camera-solid"></i>Animation
                         </span>
-                        <i class="el-icon-loading"></i>
                     </el-tab-pane>
                     <el-tab-pane>
                         <span slot="label">
                             <i class="el-icon-crop"></i>Tile Map
                         </span>
-                        <i class="el-icon-loading"></i>
                     </el-tab-pane>
                 </el-tabs>
             </el-main>
         </el-container>
+        <el-dialog title="NginD" :visible.sync="waiting_dialog" width="30%" :show-close="false" :modal="true">
+            <i class="el-icon-loading"></i><span>Loading...</span>
+            <br/>
+            <el-progress :percentage="progress"></el-progress>
+        </el-dialog>
     </el-container>
 </template>
 
@@ -53,7 +58,11 @@ export default {
             tree_prop: {
                 children: "children",
                 label: "label"
-            }
+            },
+            waiting_dialog: false,
+            progress: 0,
+            engine_list: [],
+            worlds: []
         }
     },
     methods: {
@@ -113,6 +122,12 @@ export default {
                             accelerator: "delete",
                             click: () => {}
                         }
+                    ]
+                },
+                {
+                    label: "Resources",
+                    submenu: [
+
                     ]
                 },
                 {
@@ -179,7 +194,95 @@ export default {
             Menu.setApplicationMenu(menu)
         },
         createProject() {
+            const fs = require("fs")
+            this.copyFilesPrepare(this.$route.params.engine,
+                this.$route.params.path + "/" + this.$route.params.name)
 
+            let total = 0
+            for (let item of this.engine_list) {
+                fs.copyFileSync(item.from, item.to)
+                total++
+                this.process = total / this.engine_list.length * 90
+            }
+
+            const cmake_path = this.$route.params.path +
+                "/" + this.$route.params.name + "/CMakeLists.txt"
+            let cmake = fs.readFileSync(cmake_path).toString()
+            let reg = new RegExp("NginD", "g")
+            cmake = cmake.replace(reg, this.$route.params.name)
+            fs.writeFileSync(cmake_path, cmake)
+
+            this.openProject()
+        },
+        updateRecent(title, path) {
+            let recent = localStorage.getItem("recent")
+            if (recent === "null" || recent === "" || recent === null) {
+                recent = []
+            }
+            else {
+                recent = recent.split('#')
+            }
+
+            if (recent.length === 10) {
+                recent.pop()
+            }
+
+            let date = new Date()
+            recent.push(JSON.stringify({
+                date: date.getFullYear() + '-' + date.getMonth() + '-' + date.getDay(),
+                title: title,
+                path: path
+            }))
+
+            alert(recent)
+
+            let final = ""
+            for (let item of recent) {
+                final += item
+                final += '#'
+            }
+
+            localStorage.setItem("recent", final)
+        },
+        openProject() {
+            this.updateRecent(this.$route.params.name, this.$route.params.path + "/" + this.$route.params.name)
+
+            const fs = require('fs')
+            const dir = fs.readdirSync(this.$route.params.path + "/" + this.$route.params.name + "/resources/config")
+            for (const item of dir) {
+                if (item.indexOf("world-") > -1) {
+                    alert(item)
+                    this.worlds.push(item.substr(6, item.length - 11))
+                }
+            }
+
+            this.progress = 100
+            this.waiting_dialog = false
+        },
+        copyFilesPrepare(from, to) {
+            const fs = require("fs")
+            fs.mkdirSync(to)
+
+            const dir = fs.readdirSync(from)
+            for (const item of dir) {
+                if (item[0] === '.') {
+                    continue
+                }
+
+                const f = from + "/" + item
+                const t = to + "/" + item
+
+                const state = fs.statSync(f)
+                if (state.isDirectory()) {
+                    this.copyFilesPrepare(f, t)
+                }
+                else {
+                    this.engine_list.push({
+                        from: f,
+                        to: t
+                    })
+                }
+            }
         },
         filterTreeNode(value, data) {
             if (!value) {
@@ -191,7 +294,13 @@ export default {
     },
     mounted() {
         this.createMenu()
-        this.createProject()
+        this.waiting_dialog = true
+        if (this.$route.params.engine !== null) {
+            this.createProject()
+        }
+        else {
+            this.openProject()
+        }
     }
 }
 </script>

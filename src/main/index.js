@@ -28,7 +28,7 @@ function createWindow () {
     show: false
   })
 
-  mainWindow.webContents.closeDevTools()
+  // mainWindow.webContents.closeDevTools()
 
   mainWindow.loadURL(winURL)
 

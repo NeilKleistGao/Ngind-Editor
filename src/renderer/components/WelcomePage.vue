@@ -41,17 +41,14 @@
 
         <el-main>
             <div v-if="current === '1'">
-                <h1>Recent Releases</h1>
-                <el-table :data="release_data">
-                    <el-table-column prop="date" label="Date"></el-table-column>
-                    <el-table-column label="Release">
-                        <template slot-scope="scope">
-                            <el-link type="info" :href="scope.row.link">
-                                {{scope.row.title}}
-                            </el-link>
-                        </template>
-                    </el-table-column>
-                </el-table>
+                <h1>Dogfight 3.2 Releases</h1>
+                <h3>In this version, here are updates:</h3>
+
+                <ul>
+                    <li v-for="text of release_data" class="item text-muted">
+                        {{text}}
+                    </li>
+                </ul>
             </div>
             <div v-else-if="current === '2'">
                 <h1>Create New Project</h1>
@@ -79,7 +76,7 @@
                         <el-table-column prop="date" label="Last Modified"></el-table-column>
                         <el-table-column label="Release">
                             <template slot-scope="scope">
-                                <el-link type="info">
+                                <el-link type="info" @click="open(scope.row.path, scope.row.title)">
                                     {{scope.row.title}}<small>({{scope.row.path}})</small>
                                 </el-link>
                             </template>
@@ -120,16 +117,8 @@ export default {
         return {
             current: "1",
             release_data: [
-                {
-                    "date": "2021-01-21",
-                    "title": "dogfight 3.1 release",
-                    "link": "https://github.com/NeilKleistGao/NginD/releases/tag/v0.3.1"
-                },
-                {
-                    "date": "2021-01-19",
-                    "title": "dogfight 3.0 release",
-                    "link": "https://github.com/NeilKleistGao/NginD/releases/tag/v0.3.0"
-                }
+                "Optimized memory pool algorithm;",
+                "Fixed bugs when releasing resources;"
             ],
             create_data: {
                 name: "",
@@ -149,9 +138,20 @@ export default {
     },
     methods: {
         create() {
-            if (this.name !== "" && this.path !== "" && this.settings_data.engine_path !== "") {
-                this.$router.push({path: '/main', params: {project: this.path, engine: this.settings_data.engine_path}})
+            if (this.create_data.name !== "" && this.create_data.path !== "" && this.settings_data.engine_path !== "") {
+                this.$router.push({name: 'main-page',
+                    params: {
+                        name: this.create_data.name,
+                        path: this.create_data.path,
+                        engine: this.settings_data.engine_path}})
             }
+        },
+        open(path, name) {
+            this.$router.push({name: 'main-page',
+                params: {
+                    name: this.create_data.name,
+                    path: this.create_data.path,
+                    engine: null}})
         },
         browseCreatePath() {
             const remote = require('electron').remote
@@ -177,6 +177,19 @@ export default {
         this.settings_data.engine_path = localStorage.getItem("engine-path")
         if (this.settings_data.engine_path === "null") {
             this.settings_data.engine_path = ""
+        }
+
+        let recent = localStorage.getItem("recent")
+        if (recent === "null" || recent === "" || recent === null) {
+            recent = []
+        }
+        else {
+            recent = recent.split('#')
+        }
+
+        this.recent_data = []
+        for (let i = 0; i < recent.length; i++) {
+            this.recent_data.push(JSON.parse(recent[i]))
         }
     }
 }
