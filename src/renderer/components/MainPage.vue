@@ -5,10 +5,9 @@
                 <el-select v-model="world_name" filterable>
                     <el-option v-for="w in worlds" :key="w" :label="w" :value="w"></el-option>
                 </el-select>
-                <br/>
+                <el-divider></el-divider>
                 <div>
                     <el-input placeholder="search..." v-model="tree_search_text"></el-input>
-                    <el-divider></el-divider>
                     <el-tree :data="tree_data" :props="tree_prop" default-expand-all :filter-node-method="filterTreeNode">
                     </el-tree>
                 </div>
@@ -49,12 +48,9 @@ export default {
     name: "MainPage",
     data() {
         return {
-            world_name: "welcome",
+            world_name: "",
             tree_search_text: "",
-            tree_data: [{
-                id: 0,
-                label: "world"
-            }],
+            tree_data: [],
             tree_prop: {
                 children: "children",
                 label: "label"
@@ -81,6 +77,11 @@ export default {
                         {
                             label: "Open Project",
                             accelerator: "ctrl+o",
+                            click: () => {}
+                        },
+                        {
+                            label: "Save",
+                            accelerator: "ctrl+s",
                             click: () => {}
                         },
                         {
@@ -234,8 +235,6 @@ export default {
                 path: path
             }))
 
-            alert(recent)
-
             let final = ""
             for (let item of recent) {
                 final += item
@@ -251,13 +250,16 @@ export default {
             const dir = fs.readdirSync(this.$route.params.path + "/" + this.$route.params.name + "/resources/config")
             for (const item of dir) {
                 if (item.indexOf("world-") > -1) {
-                    alert(item)
                     this.worlds.push(item.substr(6, item.length - 11))
                 }
             }
 
             this.progress = 100
             this.waiting_dialog = false
+
+            if (this.worlds.length > 0) {
+                this.world_name = this.worlds[0];
+            }
         },
         copyFilesPrepare(from, to) {
             const fs = require("fs")
@@ -290,6 +292,21 @@ export default {
             }
 
             return data.label.indexOf(value) !== -1
+        },
+        parseTreeData(current, node) {
+            if (node.hasOwnProperty("children")) {
+                let i = 0
+                for (let child of node["children"]) {
+                    current["children"].push(
+                        {
+                            label: child["name"],
+                            children: []
+                        }
+                    )
+                    this.parseTreeData(current["children"][i], child)
+                    i++
+                }
+            }
         }
     },
     mounted() {
@@ -300,6 +317,24 @@ export default {
         }
         else {
             this.openProject()
+        }
+    },
+    watch: {
+        world_name(new_value) {
+            this.tree_data = [{
+                label: "world",
+                children: []
+            }]
+
+            const fs = require("fs")
+            let content = fs.readFileSync(this.$route.params.path +
+                "/" + this.$route.params.name +
+                "/resources/config/world-" + new_value + ".json").toString()
+
+            content = JSON.parse(content)
+            console.log(content)
+
+            this.parseTreeData(this.tree_data[0], content)
         }
     }
 }
