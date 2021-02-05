@@ -132,6 +132,12 @@ export default {
                     ]
                 },
                 {
+                    label: "Worlds",
+                    submenu: [
+
+                    ]
+                },
+                {
                     label: "Components",
                     submenu: [
                         {

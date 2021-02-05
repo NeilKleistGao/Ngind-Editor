@@ -180,6 +180,7 @@ export default {
         }
 
         let recent = localStorage.getItem("recent")
+        console.log(recent)
         if (recent === "null" || recent === "" || recent === null) {
             recent = []
         }
