@@ -20,6 +20,9 @@
                         <span slot="label">
                             <i class="el-icon-picture-outline-round"></i>World
                         </span>
+                        <div style="width: 100%; height: 100%">
+                            <world-editor v-if="world_update_keys" ref="world" v-model="world_content"></world-editor>
+                        </div>
                     </el-tab-pane>
                     <el-tab-pane>
                         <span slot="label">
@@ -44,8 +47,10 @@
 
 <script>
 
+import WorldEditor from "./Editors/WorldEditor";
 export default {
     name: "MainPage",
+    components: {WorldEditor},
     data() {
         return {
             world_name: "",
@@ -58,7 +63,9 @@ export default {
             waiting_dialog: false,
             progress: 0,
             engine_list: [],
-            worlds: []
+            worlds: [],
+            world_content: {},
+            world_update_keys: 1
         }
     },
     methods: {
@@ -230,7 +237,21 @@ export default {
                 recent = recent.split('#')
             }
 
-            if (recent.length === 10) {
+            let flag = -1
+            for (let i = 0; i < recent.length; i++) {
+                if (recent[i] !== "") {
+                    let obj = JSON.parse(recent[i])
+                    if (obj.title === title && obj.path === path) {
+                        flag = i
+                        break
+                    }
+                }
+            }
+
+            if (flag > -1) {
+                recent.splice(flag, 1)
+            }
+            else if (recent.length === 10) {
                 recent.pop()
             }
 
@@ -243,14 +264,16 @@ export default {
 
             let final = ""
             for (let item of recent) {
-                final += item
-                final += '#'
+                if (item !== "") {
+                    final += item
+                    final += '#'
+                }
             }
 
             localStorage.setItem("recent", final)
         },
         openProject() {
-            this.updateRecent(this.$route.params.name, this.$route.params.path + "/" + this.$route.params.name)
+            this.updateRecent(this.$route.params.name, this.$route.params.path)
 
             const fs = require('fs')
             const dir = fs.readdirSync(this.$route.params.path + "/" + this.$route.params.name + "/resources/config")
@@ -337,10 +360,9 @@ export default {
                 "/" + this.$route.params.name +
                 "/resources/config/world-" + new_value + ".json").toString()
 
-            content = JSON.parse(content)
-            console.log(content)
-
-            this.parseTreeData(this.tree_data[0], content)
+            this.world_content = JSON.parse(content)
+            this.$refs.world.$forceUpdate()
+            this.parseTreeData(this.tree_data[0], this.world_content)
         }
     }
 }

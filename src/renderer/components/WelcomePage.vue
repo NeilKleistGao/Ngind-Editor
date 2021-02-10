@@ -77,7 +77,7 @@
                         <el-table-column label="Release">
                             <template slot-scope="scope">
                                 <el-link type="info" @click="open(scope.row.path, scope.row.title)">
-                                    {{scope.row.title}}<small>({{scope.row.path}})</small>
+                                    {{scope.row.title}}<small>({{scope.row.path + "/" + scope.row.title}})</small>
                                 </el-link>
                             </template>
                         </el-table-column>
@@ -149,8 +149,8 @@ export default {
         open(path, name) {
             this.$router.push({name: 'main-page',
                 params: {
-                    name: this.create_data.name,
-                    path: this.create_data.path,
+                    name: name,
+                    path: path,
                     engine: null}})
         },
         browseCreatePath() {
@@ -158,7 +158,7 @@ export default {
             const dialog = require('electron').remote.dialog
             this.create_data.path = dialog.showOpenDialog(remote.getCurrentWindow(), {
                 properties: ['openDirectory']
-            })
+            })[0]
         },
         browseEnginePath() {
             const remote = require('electron').remote
@@ -180,7 +180,6 @@ export default {
         }
 
         let recent = localStorage.getItem("recent")
-        console.log(recent)
         if (recent === "null" || recent === "" || recent === null) {
             recent = []
         }
@@ -190,7 +189,9 @@ export default {
 
         this.recent_data = []
         for (let i = 0; i < recent.length; i++) {
-            this.recent_data.push(JSON.parse(recent[i]))
+            if (recent[i] !== "") {
+                this.recent_data.push(JSON.parse(recent[i]))
+            }
         }
     }
 }
