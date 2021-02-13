@@ -1,11 +1,18 @@
 <template>
-    <el-container>
-        <div class="grid-background" :style="getBackgroundStyle">
-            <div v-for="obj in objects_data" :key="obj.name" :style="getObjectStyle(obj.position)">
-                <el-tag>{{obj.name}}</el-tag>
-            </div>
-        </div>
-    </el-container>
+    <el-row :gutter="20">
+        <el-col :span="18">
+            <el-card>
+                <canvas id="canvas" width="1024" height="768"></canvas>
+            </el-card>
+        </el-col>
+        <el-col :span="6">
+            <el-card>
+                <div slot="header">
+                    <h3>Properties</h3>
+                </div>
+            </el-card>
+        </el-col>
+    </el-row>
 </template>
 
 <script>
@@ -14,11 +21,12 @@ export default {
     data() {
         return {
             objects_data: [],
-            scale: 1,
+            unit: 64,
             offset: {
-                x: 52,
-                y: 48
-            }
+                x: 0,
+                y: 0
+            },
+            canvas: null
         }
     },
     props: {
@@ -47,8 +55,29 @@ export default {
                 }
             }
         },
-        getObjectStyle(position) {
-            return "position: relative; left: " + position.x + "; top: " + position.y + ";"
+        drawGrid() {
+            let ctx = this.canvas.getContext("2d")
+            const width = ctx.canvas.width
+            const height = ctx.canvas.height
+
+            const x_count = Math.floor(width / this.unit)
+            const y_count = Math.floor(height / this.unit)
+
+            for (let i = 0; i < x_count; i++) {
+                ctx.beginPath()
+                ctx.moveTo(0, this.unit * i - 0.5)
+                ctx.lineTo(width, this.unit * i - 0.5)
+                ctx.strokeStyle = "#888"
+                ctx.stroke()
+            }
+
+            for (let i = 0; i < y_count; i++) {
+                ctx.beginPath()
+                ctx.moveTo(this.unit * i, 0)
+                ctx.lineTo(this.unit * i, height)
+                ctx.strokeStyle = "#888"
+                ctx.stroke()
+            }
         }
     },
     watch: {
@@ -62,22 +91,16 @@ export default {
         }
     },
     computed: {
-        getBackgroundStyle() {
-            return "background-position: " + this.offset.x + "px, " + this.offset.y + "px;"
-        }
     },
     beforeMount() {
         this.parseEachObject(this.value)
+    },
+    mounted() {
+        this.canvas = document.getElementById("canvas")
+        this.drawGrid()
     }
 }
 </script>
 
 <style scoped>
-.grid-background {
-    width: 84vw;
-    height: 84vh;
-    background-image:-webkit-linear-gradient(top, transparent 60px, rgba(145,145,145, 200) 64px),
-                    -webkit-linear-gradient(left, transparent 60px, rgba(145,145,145, 200) 64px);
-    background-size: 64px 64px;
-}
 </style>

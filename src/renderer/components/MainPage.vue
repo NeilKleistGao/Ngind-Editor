@@ -1,42 +1,25 @@
 <template>
     <el-container>
-        <el-aside>
-            <el-card>
-                <el-select v-model="world_name" filterable>
-                    <el-option v-for="w in worlds" :key="w" :label="w" :value="w"></el-option>
-                </el-select>
-                <el-divider></el-divider>
-                <div>
-                    <el-input placeholder="search..." v-model="tree_search_text"></el-input>
-                    <el-tree :data="tree_data" :props="tree_prop" default-expand-all :filter-node-method="filterTreeNode">
-                    </el-tree>
-                </div>
-            </el-card>
-        </el-aside>
-        <el-container>
-            <el-main>
-                <el-tabs type="border-card">
-                    <el-tab-pane>
-                        <span slot="label">
-                            <i class="el-icon-picture-outline-round"></i>World
-                        </span>
-                        <div style="width: 100%; height: 100%">
-                            <world-editor v-if="world_update_keys" ref="world" v-model="world_content"></world-editor>
+        <el-main>
+            <el-row :gutter="20">
+                <el-col :span="5">
+                    <el-card>
+                        <el-select v-model="world_name" filterable>
+                            <el-option v-for="w in worlds" :key="w" :label="w" :value="w"></el-option>
+                        </el-select>
+                        <el-divider></el-divider>
+                        <div>
+                            <el-input placeholder="search..." v-model="tree_search_text"></el-input>
+                            <el-tree :data="tree_data" :props="tree_prop" default-expand-all :filter-node-method="filterTreeNode">
+                            </el-tree>
                         </div>
-                    </el-tab-pane>
-                    <el-tab-pane>
-                        <span slot="label">
-                            <i class="el-icon-video-camera-solid"></i>Animation
-                        </span>
-                    </el-tab-pane>
-                    <el-tab-pane>
-                        <span slot="label">
-                            <i class="el-icon-crop"></i>Tile Map
-                        </span>
-                    </el-tab-pane>
-                </el-tabs>
-            </el-main>
-        </el-container>
+                    </el-card>
+                </el-col>
+                <el-col :span="18">
+                    <world-editor v-if="world_update_keys" ref="world" v-model="world_content"></world-editor>
+                </el-col>
+            </el-row>
+        </el-main>
         <el-dialog title="NginD" :visible.sync="waiting_dialog" width="30%" :show-close="false" :modal="true">
             <i class="el-icon-loading"></i><span>Loading...</span>
             <br/>
@@ -135,13 +118,57 @@ export default {
                 {
                     label: "Resources",
                     submenu: [
-
+                        {
+                            label: "import",
+                            submenu: [
+                                {
+                                    label: "Sprite",
+                                    click: () => {}
+                                },
+                                {
+                                    label: "Font",
+                                    click: () => {}
+                                },
+                                {
+                                    label: "Shader",
+                                    click: () => {}
+                                },
+                                {
+                                    label: "Music",
+                                    click: () => {}
+                                },
+                                {
+                                    label: "Effect",
+                                    click: () => {}
+                                }
+                            ]
+                        },
+                        {
+                            label: "Open Directory",
+                            click: () => {}
+                        },
+                        {
+                            label: "Settings",
+                            click: () => {}
+                        }
                     ]
                 },
                 {
-                    label: "Worlds",
+                    label: "Worlds & Camera",
                     submenu: [
-
+                        {
+                            label: "Create New World",
+                            accelerator: "ctrl+shift+c",
+                            click: () => {}
+                        },
+                        {
+                            label: "Camera Settings",
+                            click: () => {}
+                        },
+                        {
+                            label: "Worlds Settings",
+                            click: () => {}
+                        }
                     ]
                 },
                 {
@@ -157,18 +184,6 @@ export default {
                             accelerator: "ctrl+shift+a",
                             click: () => {}
                         }
-                    ]
-                },
-                {
-                    label: "Animation",
-                    submenu: [
-
-                    ]
-                },
-                {
-                    label: "TileMap",
-                    submenu: [
-
                     ]
                 },
                 {
@@ -257,7 +272,7 @@ export default {
 
             let date = new Date()
             recent.push(JSON.stringify({
-                date: date.getFullYear() + '-' + date.getMonth() + '-' + date.getDay(),
+                date: date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate(),
                 title: title,
                 path: path
             }))
