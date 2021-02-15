@@ -16,7 +16,12 @@
                     </el-card>
                 </el-col>
                 <el-col :span="18">
-                    <world-editor v-if="world_update_keys" ref="world" v-model="world_content"></world-editor>
+                    <world-editor v-if="world_update_keys"
+                                  ref="world"
+                                  v-model="world_content"
+                                  :screen_width="global_settings['window-width']"
+                                  :screen_height="global_settings['window-height']">
+                    </world-editor>
                 </el-col>
             </el-row>
         </el-main>
@@ -48,7 +53,8 @@ export default {
             engine_list: [],
             worlds: [],
             world_content: {},
-            world_update_keys: 1
+            world_update_keys: 1,
+            global_settings: {}
         }
     },
     methods: {
@@ -295,6 +301,10 @@ export default {
             for (const item of dir) {
                 if (item.indexOf("world-") > -1) {
                     this.worlds.push(item.substr(6, item.length - 11))
+                }
+                else if (item === "global_settings.json") {
+                    let settings = fs.readFileSync(this.$route.params.path + "/" + this.$route.params.name + "/resources/config/" + item)
+                    this.global_settings = JSON.parse(settings.toString())
                 }
             }
 

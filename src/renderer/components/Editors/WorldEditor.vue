@@ -1,8 +1,8 @@
 <template>
     <el-row :gutter="20">
         <el-col :span="18">
-            <el-card style="max-width: 1024px">
-                <canvas id="canvas" width="1024" height="1024"></canvas>
+            <el-card style="max-width: 1024px; max-height: 768px">
+                <canvas id="canvas" width="1024" height="768"></canvas>
             </el-card>
         </el-col>
         <el-col :span="6">
@@ -21,18 +21,31 @@ export default {
     data() {
         return {
             objects_data: [],
-            unit: 64,
+            scale: 1,
             offset: {
                 x: 0,
                 y: 0
             },
-            canvas: null
+            camera: {
+                x: 0,
+                y: 0
+            },
+            canvas: null,
+            background_color: "#000000FF"
         }
     },
     props: {
         value: {
             required: true,
             type: Object
+        },
+        screen_width: {
+            default: 1024,
+            type: Number
+        },
+        screen_height: {
+            default: 768,
+            type: Number
         }
     },
     methods: {
@@ -48,6 +61,12 @@ export default {
             if (!current.hasOwnProperty("world-name")) {
                 this.objects_data.push(current)
             }
+            else {
+                this.offset.x = -Math.floor(current["camera"].x - 512)
+                this.offset.y = -Math.floor(current["camera"].y - 384)
+                this.camera = current["camera"]
+                this.background_color = current["background-color"]
+            }
 
             if (current.hasOwnProperty("children")) {
                 for (let child of current.children) {
@@ -55,45 +74,55 @@ export default {
                 }
             }
         },
-        drawGrid() {
+        drawClean() {
             let ctx = this.canvas.getContext("2d")
             const width = ctx.canvas.width
             const height = ctx.canvas.height
 
-            ctx.clearRect(0, 0, width, height)
-
-            const x_count = Math.floor(width / this.unit)
-            const y_count = Math.floor(height / this.unit)
-
-            for (let i = 0; i < x_count; i++) {
-                ctx.beginPath()
-                ctx.moveTo(0, this.offset.y + this.unit * i - 0.5)
-                ctx.lineTo(width, this.offset.y + this.unit * i - 0.5)
-                ctx.strokeStyle = "#888"
-                ctx.stroke()
-            }
-
-            for (let i = 0; i < y_count; i++) {
-                ctx.beginPath()
-                ctx.moveTo(this.offset.x + this.unit * i, 0)
-                ctx.lineTo(this.offset.x + this.unit * i, height)
-                ctx.strokeStyle = "#888"
-                ctx.stroke()
-            }
+            ctx.strokeStyle = this.background_color
+            ctx.fillRect(0, 0, width, height)
         },
         drawText(font, text, color, pos) {
             let ctx = this.canvas.getContext("2d")
             const height = ctx.canvas.height
 
+            ctx.textAlign = "center"
             ctx.font = font
             ctx.fillStyle = color
-            ctx.fillText(text, pos.x, height - pos.y)
+            ctx.fillText(text, pos.x + this.offset.x, this.offset.y + height - pos.y)
+        },
+        drawImage(filename, pos) {
+            let ctx = this.canvas.getContext("2d")
+            const height = ctx.canvas.height
+
+            let img = new Image()
+            img.src = this.$route.params.path + "/" + this.$route.params.name + "/resources/images" + filename
+            img.onload = () => {
+                ctx.drawImage(img, pos.x - img.width / 2, height - (pos.y - img.height / 2))
+            }
         },
         drawEntity(entity) {
-            this.drawText('20px "微软雅黑"', entity.name, "red", entity.position)
+            if (entity.hasOwnProperty("components")) {
+                const components = entity["components"]
+                for (let com of components) {
+                    if (com.type === "Label") {
+                        this.drawText(com.size + 'px "微软雅黑"', com.text, "#FFFFFF", entity.position)
+                    }
+                    else if (com.type === "Sprite") {
+                        this.drawImage(com.filename, entity.position)
+                    }
+                }
+            }
         },
-        drawCamera() {
-            // TODO:
+        draw() {
+            if (this.canvas === null) {
+                this.canvas = document.getElementById("canvas")
+            }
+            this.drawClean()
+
+            for (let obj of this.objects_data) {
+                this.drawEntity(obj)
+            }
         }
     },
     watch: {
@@ -101,28 +130,33 @@ export default {
             deep: true,
             handler(new_value) {
                 this.objects_data = []
-                this.parseEachObject(this.value)
-                this.drawGrid()
-                for (let obj of this.objects_data) {
-                    this.drawEntity(obj)
-                }
-
+                this.parseEachObject(new_value)
+                this.draw()
                 this.$emit("input", new_value)
             }
+        },
+        offset: {
+            deep: true,
+            handler() {
+                this.draw()
+            }
+        },
+        scale: {
+            handler() {
+                this.draw()
+            }
+        },
+        background_color: {
+            handler() {
+                this.draw()
+            }
         }
-    },
-    computed: {
     },
     beforeMount() {
         this.parseEachObject(this.value)
     },
     mounted() {
-        this.canvas = document.getElementById("canvas")
-        this.drawGrid()
-
-        for (let obj of this.objects_data) {
-            this.drawEntity(obj)
-        }
+        this.draw()
     }
 }
 </script>
